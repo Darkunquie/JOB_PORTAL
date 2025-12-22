@@ -85,18 +85,6 @@ class ErrorTracker {
       this.errors = this.errors.slice(-this.maxErrors);
     }
 
-    // Log to console with color coding
-    const consoleMethod = severity === 'error' ? 'error' : severity === 'warning' ? 'warn' : 'info';
-    console.groupCollapsed(
-      `%c[${severity.toUpperCase()}] ${feature} - ${action}`,
-      `color: ${severity === 'error' ? 'red' : severity === 'warning' ? 'orange' : 'blue'}; font-weight: bold;`
-    );
-    console.log('Error:', errorEntry.error);
-    console.log('Context:', errorEntry.context);
-    console.log('Checksum:', errorEntry.checksum);
-    console.log('Timestamp:', errorEntry.timestamp);
-    console.groupEnd();
-
     // Store in localStorage for persistence
     this.saveToStorage();
 
@@ -209,7 +197,7 @@ class ErrorTracker {
       };
       localStorage.setItem('errorTracker', JSON.stringify(data));
     } catch (e) {
-      console.warn('Failed to save errors to localStorage:', e);
+      // Silently fail if localStorage is unavailable
     }
   }
 
@@ -222,10 +210,9 @@ class ErrorTracker {
       if (data) {
         const parsed = JSON.parse(data);
         this.errors = parsed.errors || [];
-        console.log(`Loaded ${this.errors.length} errors from previous session`);
       }
     } catch (e) {
-      console.warn('Failed to load errors from localStorage:', e);
+      // Silently fail if localStorage is unavailable
     }
   }
 

@@ -1,70 +1,108 @@
-version: '3.8'
-
 services:
+  # --------------------------------------------------
+  # DATABASE
+  # --------------------------------------------------
   db:
     image: postgres:15-alpine
     container_name: jobmarket-db
-    restart: unless-stopped
+    restart: always
+
+    env_file:
+      - .env
+
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-jobmarket}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobmarket123}
-      POSTGRES_DB: ${POSTGRES_DB:-jobmarket}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jobmarket}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+
+  # --------------------------------------------------
+  # BACKEND (FastAPI)
+  # --------------------------------------------------
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: jobmarket-backend
     restart: unless-stopped
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-jobmarket}:${POSTGRES_PASSWORD:-jobmarket123}@db:5432/${POSTGRES_DB:-jobmarket}
-      SECRET_KEY: ${SECRET_KEY:-change-this-to-a-secure-random-key-minimum-32-characters}
-      DEBUG: ${DEBUG:-False}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost}
+
+    env_file:
+      - .env
+
     volumes:
       - uploads_data:/app/uploads
-    ports:
-      - "8000:8000"
+
     depends_on:
       db:
         condition: service_healthy
+
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<EOF\nimport urllib.request,sys\nsys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\nEOF"
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
 
+
+  # --------------------------------------------------
+  # FRONTEND
+  # --------------------------------------------------
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: jobmarket-frontend
     restart: unless-stopped
-    ports:
-      - "80:80"
+
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
 
+
+  # --------------------------------------------------
+  # NGINX (ENTRY POINT)
+  # --------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: jobmarket-nginx
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+
+
 volumes:
   postgres_data:
-    driver: local
   uploads_data:
-    driver: local
+
 
 networks:
   default:

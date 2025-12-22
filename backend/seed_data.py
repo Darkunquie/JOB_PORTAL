@@ -1,10 +1,46 @@
+"""
+⚠️ WARNING: SAMPLE DATA SCRIPT - FOR DEVELOPMENT ONLY!
+
+This script adds dummy/sample data to the database.
+DO NOT RUN THIS IN PRODUCTION!
+
+This is only for:
+- Local development
+- Testing
+- Demos
+
+For production, use:
+- docker-compose exec backend python init_db.py (create tables)
+- docker-compose exec backend python create_user.py (create admin)
+"""
+
+import sys
+
+print("\n" + "="*60)
+print("⚠️  WARNING: SAMPLE DATA SCRIPT")
+print("="*60)
+print("\nThis script adds DUMMY DATA for development/testing only.")
+print("DO NOT use this in production!")
+print("\nThis will create:")
+print("  - 3 sample employer accounts")
+print("  - 3 sample companies")
+print("  - 9 sample job listings")
+print("\n" + "="*60)
+
+response = input("\n⚠️  Continue? (type 'YES' to confirm): ").strip()
+
+if response != "YES":
+    print("\n❌ Cancelled. No data was added.")
+    print("="*60 + "\n")
+    sys.exit(0)
+
 from app.database import SessionLocal
 from app.models import User, Company, Job, UserRole, JobStatus, EmploymentType
 from app.auth.security import get_password_hash
 
 db = SessionLocal()
 
-print("🌱 Seeding database with sample data...")
+print("\n🌱 Seeding database with sample data...")
 
 # Clear existing data (except admin)
 db.query(Job).delete()

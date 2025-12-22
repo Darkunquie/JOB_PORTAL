@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Layout
 import Layout from './components/Layout';
-import DebugPanel from './components/DebugPanel';
 
 // Public Pages
 import HomePage from './pages/HomePage';
@@ -19,13 +18,14 @@ import ProfilePage from './pages/seekerProfilePage';
 
 // Protected Pages - Employer
 import EmployerDashboard from './pages/employerDashboard';
-import CompanyManagement from './pages/employerCompanyManagement';
+import EmployerCompanyManagement from './pages/employerCompanyManagement';
 import PostJob from './pages/employerPostJob';
 import ManageApplications from './pages/employerManageApplications';
 
 // Protected Pages - Admin
 import AdminDashboard from './pages/adminDashboard';
 import UserManagement from './pages/adminUserManagement';
+import AdminCompanyManagement from './pages/adminCompanyManagement';
 
 // Special Pages
 import PendingApproval from './pages/PendingApproval';
@@ -110,7 +110,7 @@ function AppRoutes() {
           path="employer/companies"
           element={
             <ProtectedRoute requireRole={['employer', 'admin']}>
-              <CompanyManagement />
+              <EmployerCompanyManagement />
             </ProtectedRoute>
           }
         />
@@ -148,6 +148,14 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="admin/companies"
+          element={
+            <ProtectedRoute requireRole={['admin']}>
+              <AdminCompanyManagement />
+            </ProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   );
@@ -158,7 +166,6 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <AppRoutes />
-        <DebugPanel />
       </BrowserRouter>
     </AuthProvider>
   );

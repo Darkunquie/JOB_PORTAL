@@ -38,9 +38,7 @@ apiClient.interceptors.request.use(
 // Response interceptor for error handling and tracking
 apiClient.interceptors.response.use(
   (response) => {
-    // Track successful request timing
-    const duration = Date.now() - (response.config.metadata?.startTime || 0);
-    console.log(`API Success: ${response.config.method?.toUpperCase()} ${response.config.url} (${duration}ms)`);
+    // Track successful request timing (silently)
     return response;
   },
   (error) => {
@@ -128,6 +126,8 @@ export const adminAPI = {
   getPendingEmployers: () => apiClient.get('/admin/pending-employers'),
   approveEmployer: (id) => apiClient.post(`/admin/approve-employer/${id}`),
   rejectEmployer: (id) => apiClient.delete(`/admin/reject-employer/${id}`),
+  getCompanies: (params) => apiClient.get('/admin/companies', { params }),
+  deleteCompany: (id) => apiClient.delete(`/admin/companies/${id}`),
 };
 
 export default apiClient;

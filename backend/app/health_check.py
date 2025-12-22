@@ -288,3 +288,11 @@ def get_health_report() -> Dict[str, Any]:
     """Get comprehensive health report."""
     checker = HealthChecker()
     return checker.run_all_checks()
+
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/health", tags=["health"])
+def health():
+    return {"status": "ok"}

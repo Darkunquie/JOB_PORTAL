@@ -297,6 +297,83 @@ def reject_employer(
     return None
 
 
+@router.get("/companies")
+def list_all_companies(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    search: Optional[str] = Query(None, description="Search by company name"),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    List all companies in the system.
+
+    Admin-only endpoint with filtering and search capabilities.
+    """
+    from app.models import Company
+
+    query = db.query(
+        Company.id,
+        Company.name,
+        Company.description,
+        Company.created_at,
+        Company.owner_id,
+        User.email.label("owner_email"),
+        Profile.full_name.label("owner_name")
+    ).join(User, Company.owner_id == User.id).outerjoin(Profile, User.id == Profile.user_id)
+
+    # Apply search filter
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(Company.name.ilike(search_term))
+
+    # Order by creation date
+    query = query.order_by(Company.created_at.desc())
+
+    # Pagination
+    companies = query.offset(skip).limit(limit).all()
+
+    return [
+        {
+            "id": comp.id,
+            "name": comp.name,
+            "description": comp.description,
+            "created_at": comp.created_at,
+            "owner_id": comp.owner_id,
+            "owner_email": comp.owner_email,
+            "owner_name": comp.owner_name
+        }
+        for comp in companies
+    ]
+
+
+@router.delete("/companies/{company_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_company(
+    company_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a company and all its associated jobs.
+
+    Admin-only endpoint. This will cascade delete all jobs posted by this company.
+    """
+    from app.models import Company
+
+    company = db.query(Company).filter(Company.id == company_id).first()
+
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found"
+        )
+
+    db.delete(company)
+    db.commit()
+
+    return None
+
+
 @router.get("/stats")
 def get_platform_stats(
     current_user: User = Depends(require_admin),
