@@ -1,0 +1,35 @@
+# Systemd service file for Job Site FastAPI Backend
+# Place this in: /etc/systemd/system/job-site-backend.service
+
+[Unit]
+Description=Job Site FastAPI Backend
+After=network.target postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/job-site/backend
+Environment="PATH=/var/www/job-site/backend/venv/bin"
+ExecStart=/var/www/job-site/backend/venv/bin/uvicorn app.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --workers 4 \
+    --log-level info \
+    --access-log
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=job-site-backend
+
+[Install]
+WantedBy=multi-user.target
