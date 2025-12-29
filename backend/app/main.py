@@ -135,7 +135,7 @@ def root():
 # Mount static files for resume downloads
 upload_dir = Path(settings.UPLOAD_DIR)
 upload_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(upload_dir.parent / "uploads")), name="uploads")
+app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
 
 # Register routers
